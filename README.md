@@ -1,90 +1,30 @@
-# Flutter Dev Container Templates 🚀
+# DevContainer Templates
 
-**A collection of Dev Container Templates for Flutter development**
+**A collection of Dev Container Templates**
 
 This repository provides ready-to-use Dev Container Templates for Flutter app development with VS Code or GitHub Codespaces.
 
 ## Available Templates
 
-### Flutter 🦋
+| Category | Template | Image | Description | Documentation |
+|----------|----------|-------|-------------|---------------|
+| Mobile Development | Flutter 🦋 | `ghcr.io/techiro/flutter-devcontainer:latest` | Complete Flutter development setup with Dart SDK and VS Code extensions | [src/flutter/README.md](src/flutter/README.md) |
 
-Instant Flutter development environment — just launch and start coding!
+## Usage
 
-- **Template ID**: `flutter`
-- **Description**: Complete Flutter development setup with Dart SDK and VS Code extensions
-- **Documentation**: [src/flutter/README.md](src/flutter/README.md)
+1. Install the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension in VS Code
+2. Clone this repository
+3. Open the repository in VS Code
+4. Select the desired template from the command palette: `Dev Containers: Add Dev Container Configuration Files...`
+5. Reopen in container
 
-## Quick Start ✨
+## Contributing
 
-### Option 1: Use in VS Code Dev Containers
+1. Fork the repository
+2. Create a new branch
+3. Make your changes
+4. Submit a pull request
 
-1. Open VS Code
-2. Install the "Dev Containers" extension
-3. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
-4. Select "Dev Containers: Add Dev Container Configuration Files..."
-5. Choose "Show All Definitions..."
-6. Search for "Flutter" and select this template
+## License
 
-### Option 2: Use in GitHub Codespaces
-
-1. Create a new repository or open an existing one
-2. Click "Code" → "Codespaces" → "Configure dev container"
-3. Search for "Flutter" template
-4. Select and customize as needed
-
-### Option 3: Manual Setup
-
-Add to your project's `.devcontainer/devcontainer.json`:
-
-```json
-{
-  "name": "Flutter DevContainer",
-  "image": "ghcr.io/techiro/flutter-devcontainer/flutter:latest"
-}
-```
-
-## Features 🌟
-
-- Latest **Flutter** and **Dart** SDKs 🐦
-- Pre-installed VS Code extensions: Dart & Flutter 🧑‍💻
-- Works out-of-the-box with VS Code Dev Containers and GitHub Codespaces 💻
-- Automatic build & distribution via GitHub Container Registry (GHCR) 📦
-
-## Template Structure
-
-```
-├── src/
-│   └── flutter/
-│       ├── devcontainer-template.json
-│       ├── .devcontainer/
-│       │   └── devcontainer.json
-│       ├── Dockerfile
-│       └── README.md
-├── test/
-│   ├── flutter/
-│   │   └── test.sh
-│   └── test-utils/
-│       └── test-utils.sh
-└── .github/
-    └── workflows/
-        └── publish.yml
-```
-
-## Development & Contribution 🤝
-
-### Local Testing
-
-```bash
-# Test the Flutter template
-./test/flutter/test.sh
-```
-
-### Publishing
-
-Templates are automatically published to GHCR when changes are pushed to the `main` branch.
-
-## License 📄
-
-MIT License - See the [LICENSE](LICENSE) file for details.
-
-This template collection is based on the [devcontainers/template-starter](https://github.com/devcontainers/template-starter) and follows the [Dev Container Template specification](https://containers.dev/implementors/templates-distribution/).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

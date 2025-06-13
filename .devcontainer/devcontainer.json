@@ -1,5 +1,6 @@
 {
-  "name": "DevContainer Template",
+  // For more information, see: https://containers.dev/implementors/json_reference/
+  "name": "DevContainer Template Base",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:latest",
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {}
