@@ -1,3 +1,4 @@
+---
 name: Build and Publish Dev Container Templates
 
 on:
@@ -10,7 +11,35 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-push:
+  discover-templates:
+    runs-on: ubuntu-latest
+    outputs:
+      templates: ${{ steps.discover.outputs.templates }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Discover templates
+        id: discover
+        run: |
+          templates=()
+          for dir in src/*/; do
+            if [ -f "${dir}devcontainer-template.json" ]; then
+              template_name=$(basename "$dir")
+              templates+=("\"$template_name\"")
+            fi
+          done
+
+          if [ ${#templates[@]} -eq 0 ]; then
+            echo "No templates found!"
+            exit 1
+          fi
+
+          template_json="[$(IFS=,; echo "${templates[*]}")]"
+          echo "Found templates: $template_json"
+          echo "templates=$template_json" >> $GITHUB_OUTPUT
+
+  publish-templates:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -37,13 +66,56 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image (fallback)
+  build-and-push:
+    needs: [discover-templates, publish-templates]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        template: ${{ fromJson(needs.discover-templates.outputs.templates) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read template metadata
+        id: metadata
+        run: |
+          template_path="./src/${{ matrix.template }}"
+          template_json="$template_path/devcontainer-template.json"
+          if [ ! -f "$template_json" ]; then
+            echo "Template metadata not found: $template_json"
+            exit 1
+          fi
+
+          template_name=$(jq -r '.name // "${{ matrix.template }}"' \
+            "$template_json")
+          fallback_desc="DevContainer template for ${{ matrix.template }}"
+          template_description=$(jq -r \
+            ".description // \"$fallback_desc\"" \
+            "$template_json")
+
+          echo "template_name=$template_name" >> $GITHUB_OUTPUT
+          echo "template_description=$template_description" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./src/flutter
+          context: ./src/${{ matrix.template }}
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/flutter:latest
+          tags: >-
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/
+            ${{ matrix.template }}:latest
           labels: |
-            org.opencontainers.image.title=Flutter DevContainer
-            org.opencontainers.image.description=Instant Flutter development environment
+            org.opencontainers.image.title=${{ steps.metadata.outputs.template_name }}
+            org.opencontainers.image.description=${{ steps.metadata.outputs.template_description }}
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
