@@ -35,9 +35,7 @@ jobs:
         template: ${{ fromJson(needs.detect-templates.outputs.templates) }}
         include:
           - template: flutter
-            image: ghcr.io/techiro/devcontainer-template/flutter:latest
             platform: linux/amd64
-      # 1つのテンプレートのテスト失敗が他に影響しないようにする
       fail-fast: false
 
     name: Test ${{ matrix.template }} template
@@ -63,7 +61,7 @@ jobs:
       - name: Build and test Dev Container
         uses: devcontainers/ci@v0.3
         with:
-          imageName: ghcr.io/techiro/devcontainer-template/${{ matrix.template }}:latest
+          imageName: ghcr.io/techiro/devcontainer-template/${{ matrix.template }}
           platform: ${{ steps.metadata.outputs.platforms }}
           runCmd: cd test/${{ matrix.template }} && bash test.sh
 
