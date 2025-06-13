@@ -9,10 +9,12 @@
       ]
     }
   },
-  "postCreateCommand": "flutter pub get",
   "remoteUser": "root",
   "features": {},
   "forwardPorts": [],
   "mounts": [],
-  "workspaceFolder": "/workspace"
+  "workspaceFolder": "/workspace",
+  "containerEnv": {
+    "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/android-sdk-linux/cmdline-tools/latest/bin:/opt/android-sdk-linux/platform-tools:/opt/android-sdk-linux/emulator:/sdks/flutter/bin:/sdks/flutter/bin/cache/dart-sdk/bin"
+  }
 }
