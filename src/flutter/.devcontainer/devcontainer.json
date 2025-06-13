@@ -1,6 +1,6 @@
 {
-  "name": "Flutter DevContainer",
-  "image": "ghcr.io/techiro/flutter-devcontainer:latest",
+  "name": "Flutter Development Container",
+  "image": "ghcr.io/techiro/devcontainer-template/flutter:latest",
   "customizations": {
     "vscode": {
       "extensions": [

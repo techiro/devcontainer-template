@@ -8,7 +8,7 @@ This repository provides ready-to-use Dev Container Templates for Flutter app de
 
 | Category | Template | Image | Description | Documentation |
 |----------|----------|-------|-------------|---------------|
-| Mobile Development | Flutter 🦋 | `ghcr.io/techiro/flutter-devcontainer:latest` | Complete Flutter development setup with Dart SDK and VS Code extensions | [src/flutter/README.md](src/flutter/README.md) |
+| Mobile Development | Flutter 🦋 | `ghcr.io/techiro/devcontainer-template/flutter:latest` | Complete Flutter development setup with Dart SDK and VS Code extensions | [src/flutter/README.md](src/flutter/README.md) |
 
 ## Usage
 

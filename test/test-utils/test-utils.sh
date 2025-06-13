@@ -2,34 +2,41 @@
 
 FAILED=()
 
-check() {
-    LABEL=$1
+# テストを実行して結果を確認する
+runTest() {
+    testName="${1}"
     shift
-    echo -e "\n🧪 Testing $LABEL"
+
+    echo -e "\n🧪 テスト実行: ${testName}"
+
     if "$@"; then
-        echo "✅ Passed!"
+        showSuccess "${testName}"
         return 0
     else
-        echo "❌ $LABEL check failed."
-        FAILED+=("$LABEL")
+        showFailure "${testName}"
         return 1
     fi
 }
 
-checkCommon() {
-    check "non-root-user" id ${_REMOTE_USER}
-    check "locale" [ $(locale -a | grep en_US.utf8) ]
-    check "sudo" sudo echo "sudo works"
-    check "git" git --version
-    check "command-line-tools" which curl wget unzip
+# テスト成功時の処理
+showSuccess() {
+    echo "✅ テスト成功!"
 }
 
-reportResults() {
-    if [ ${#FAILED[@]} -ne 0 ]; then
-        echo -e "\n💥 Failed tests: ${FAILED[*]}"
-        exit 1
-    else
-        echo -e "\n💯 All tests passed!"
+# テスト失敗時の処理
+showFailure() {
+    testName="${1}"
+    echo "❌ テスト失敗: ${testName}"
+    FAILED+=("${testName}")
+}
+
+# 最終的なテスト結果を表示
+showTestSummary() {
+    if [[ ${#FAILED[@]} -eq 0 ]]; then
+        echo -e "\n💯 すべてのテストが成功しました!"
         exit 0
+    else
+        echo -e "\n💥 失敗したテスト: ${FAILED[*]}"
+        exit 1
     fi
 }

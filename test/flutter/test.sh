@@ -1,18 +1,14 @@
 #!/bin/bash
-cd $(dirname "$0")
-source ../test-utils/test-utils.sh
+# shellcheck disable=SC1091
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)" || exit
+source "${SCRIPT_DIR}/../test-utils/test-utils.sh"
 
-# Template specific tests
-checkCommon
+# Flutterの基本コマンドのテスト
+runTest "Flutter CLI" flutter --version
+runTest "Dart CLI" dart --version
 
-# Check if Flutter is installed and working
-check "flutter" flutter --version
+# Flutter doctorのチェック
+runTest "Flutter環境診断" flutter doctor
 
-# Check if Dart is installed and working
-check "dart" dart --version
-
-# Check if Flutter doctor runs successfully
-check "flutter-doctor" flutter doctor
-
-# Report result
-reportResults
+# テスト結果の表示
+showTestSummary

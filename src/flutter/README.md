@@ -25,7 +25,7 @@ Create `.devcontainer/devcontainer.json` in your project:
 ```json
 {
   "name": "Flutter DevContainer",
-  "image": "ghcr.io/techiro/flutter-devcontainer:latest",
+  "image": "ghcr.io/techiro/devcontainer-template/flutter:latest",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -42,7 +42,7 @@ Create `.devcontainer/devcontainer.json` in your project:
 
 ## Template Options
 
-- **imageVariant**: Choose Flutter version (`latest` or `stable`)
+- **imageVariant**: Choose Flutter version (`latest`)
 
 ## License
 
