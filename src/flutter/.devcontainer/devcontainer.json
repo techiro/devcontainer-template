@@ -9,6 +9,7 @@
       ]
     }
   },
+  "postCreateCommand": "flutter pub get",
   "remoteUser": "root",
   "features": {},
   "forwardPorts": [],
