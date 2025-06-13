@@ -1,6 +1,10 @@
 # Flutter DevContainer
 FROM ghcr.io/cirruslabs/flutter:latest
 
+LABEL org.opencontainers.image.source="https://github.com/techiro/flutter-devcontainer"
+LABEL org.opencontainers.image.description="Flutter DevContainer for VS Code and Codespaces"
+LABEL org.opencontainers.image.licenses="MIT"
+
 # 作業ディレクトリを設定
 WORKDIR /workspace
 
@@ -9,9 +13,6 @@ COPY . .
 
 # Flutter の pub cache を設定
 ENV PUB_CACHE=/workspace/.pub-cache
-
-# Flutter コマンドのパスを通す
-ENV PATH="$PATH:/home/cirrus/sdks/flutter/bin"
 
 # デフォルトコマンド
 CMD ["/bin/bash"]
