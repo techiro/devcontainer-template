@@ -42,6 +42,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Docker Buildxのセットアップ
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container
+
       # テンプレートのメタデータを読み込み
       # devcontainer-template.json からプラットフォーム情報などを取得
       - name: Load template metadata
