@@ -1,4 +1,4 @@
-name: Build and Publish Flutter DevContainer
+name: Build and Publish Dev Container Templates
 
 on:
   push:
@@ -27,21 +27,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
+      - name: Build and publish Dev Container Templates
+        uses: devcontainers/action@v1
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
+          publish-templates: "true"
+          base-path-to-templates: "./src"
+          generate-docs: "true"
 
-      - name: Build and push Docker image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image (fallback)
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./src/flutter
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/flutter:latest
+          labels: |
+            org.opencontainers.image.title=Flutter DevContainer
+            org.opencontainers.image.description=Instant Flutter development environment
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}

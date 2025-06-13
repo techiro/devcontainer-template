@@ -1,25 +1,47 @@
-# Flutter DevContainer 🚀
+# Flutter Dev Container Templates 🚀
 
-**Instant Flutter development environment for everyone — just launch and start coding! 🦋**
+**A collection of Dev Container Templates for Flutter development**
 
-A ready-to-use DevContainer image for seamless Flutter app development with VS Code or GitHub Codespaces. No setup required.
+This repository provides ready-to-use Dev Container Templates for Flutter app development with VS Code or GitHub Codespaces.
 
-## Getting Started ✨
+## Available Templates
 
-1. **Clone this repository** 📥
-2. **Open in VS Code** 🖥️
-3. **Select "Reopen in Container"** 🧩
-4. Start building your Flutter app immediately! 🎉
+### Flutter 🦋
 
-Or, use it in your own project by adding the following to your `.devcontainer/devcontainer.json`:
+Instant Flutter development environment — just launch and start coding!
+
+- **Template ID**: `flutter`
+- **Description**: Complete Flutter development setup with Dart SDK and VS Code extensions
+- **Documentation**: [src/flutter/README.md](src/flutter/README.md)
+
+## Quick Start ✨
+
+### Option 1: Use in VS Code Dev Containers
+
+1. Open VS Code
+2. Install the "Dev Containers" extension
+3. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
+4. Select "Dev Containers: Add Dev Container Configuration Files..."
+5. Choose "Show All Definitions..."
+6. Search for "Flutter" and select this template
+
+### Option 2: Use in GitHub Codespaces
+
+1. Create a new repository or open an existing one
+2. Click "Code" → "Codespaces" → "Configure dev container"
+3. Search for "Flutter" template
+4. Select and customize as needed
+
+### Option 3: Manual Setup
+
+Add to your project's `.devcontainer/devcontainer.json`:
 
 ```json
 {
-  "image": "ghcr.io/techiro/flutter-devcontainer:latest"
+  "name": "Flutter DevContainer",
+  "image": "ghcr.io/techiro/flutter-devcontainer/flutter:latest"
 }
 ```
-
----
 
 ## Features 🌟
 
@@ -28,45 +50,41 @@ Or, use it in your own project by adding the following to your `.devcontainer/de
 - Works out-of-the-box with VS Code Dev Containers and GitHub Codespaces 💻
 - Automatic build & distribution via GitHub Container Registry (GHCR) 📦
 
-## How to Use the Published Image 🐳
+## Template Structure
 
-### 1. Use directly with Docker command
-
-Anyone can pull the image with:
-
-```bash
-docker pull ghcr.io/techiro/flutter-devcontainer:latest
 ```
-
-### 2. Use in devcontainer.json
-
-```json
-{
-  "image": "ghcr.io/techiro/flutter-devcontainer:latest"
-}
-```
-
-### 3. Use as a base image in Dockerfile
-
-```dockerfile
-FROM ghcr.io/techiro/flutter-devcontainer:latest
+├── src/
+│   └── flutter/
+│       ├── devcontainer-template.json
+│       ├── .devcontainer/
+│       │   └── devcontainer.json
+│       ├── Dockerfile
+│       └── README.md
+├── test/
+│   ├── flutter/
+│   │   └── test.sh
+│   └── test-utils/
+│       └── test-utils.sh
+└── .github/
+    └── workflows/
+        └── publish.yml
 ```
 
 ## Development & Contribution 🤝
 
-### Local Build
+### Local Testing
 
 ```bash
-docker build -t ghcr.io/techiro/flutter-devcontainer:latest .
-docker run --rm -it ghcr.io/techiro/flutter-devcontainer:latest flutter --version
+# Test the Flutter template
+./test/flutter/test.sh
 ```
 
-### CI/CD ⚙️
+### Publishing
 
-This repository uses GitHub Actions to automatically build and distribute the container image to GHCR.
+Templates are automatically published to GHCR when changes are pushed to the `main` branch.
 
 ## License 📄
 
 MIT License - See the [LICENSE](LICENSE) file for details.
 
-This image is based on cirruslabs/flutter (MIT) and Flutter SDK (BSD 3-Clause).
+This template collection is based on the [devcontainers/template-starter](https://github.com/devcontainers/template-starter) and follows the [Dev Container Template specification](https://containers.dev/implementors/templates-distribution/).

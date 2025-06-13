@@ -1,0 +1,34 @@
+{
+    "id": "flutter",
+    "version": "1.0.0",
+    "name": "Flutter",
+    "description": "Instant Flutter development environment — just launch and start coding!",
+    "documentationURL": "https://github.com/techiro/flutter-devcontainer",
+    "licenseURL": "https://github.com/techiro/flutter-devcontainer/blob/main/LICENSE",
+    "options": {
+        "imageVariant": {
+            "type": "string",
+            "description": "Flutter version to use",
+            "proposals": [
+                "latest",
+                "stable"
+            ],
+            "default": "latest"
+        }
+    },
+    "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+    ],
+    "publisher": "techiro",
+    "keywords": [
+        "flutter",
+        "dart",
+        "mobile",
+        "devcontainer"
+    ],
+    "categories": [
+        "Languages",
+        "Other"
+    ]
+}
