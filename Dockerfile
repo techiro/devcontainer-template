@@ -1,5 +1,5 @@
 # Flutter DevContainer
-FROM cirrusci/flutter:latest
+FROM ghcr.io/cirruslabs/flutter:latest
 
 # 作業ディレクトリを設定
 WORKDIR /workspace
