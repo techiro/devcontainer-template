@@ -4,6 +4,8 @@
 
 This repository provides ready-to-use Dev Container Templates for Flutter app development with VS Code or GitHub Codespaces.
 
+![DevContainer Demo](assets/devcontainer-demo.png)
+
 ## Available Templates
 
 | Category | Template | Image | Description | Documentation |
