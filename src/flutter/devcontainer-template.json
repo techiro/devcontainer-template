@@ -1,22 +1,24 @@
 {
     "id": "flutter",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "name": "Flutter",
-    "description": "Instant Flutter development environment — just launch and start coding!",
+    "description": "Flutter stable SDK, Chromium and Linux desktop tools for VS Code and Codespaces (amd64 and arm64).",
     "documentationURL": "https://github.com/techiro/devcontainer-template/blob/main/src/flutter/README.md",
     "licenseURL": "https://github.com/techiro/devcontainer-template/blob/main/LICENSE",
     "options": {
-        "imageVariant": {
+        "flutterVersion": {
             "type": "string",
-            "description": "Flutter version to use",
+            "description": "Flutter SDK tag, or stable to follow the stable channel on a fresh build",
             "proposals": [
-                "latest"
+                "3.47.7",
+                "stable"
             ],
-            "default": "latest"
+            "default": "3.47.7"
         }
     },
     "platforms": [
-        "linux/amd64"
+        "linux/amd64",
+        "linux/arm64"
     ],
     "publisher": "techiro",
     "keywords": [

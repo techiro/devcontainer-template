@@ -1,54 +1,66 @@
-name: Build and Publish Dev Container Templates
+name: Validate and Publish Dev Container Templates
 
 on:
   push:
     branches: [ main ]
+  pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: templates-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  validate:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+      - name: Install Dev Container CLI
+        run: npm install --global @devcontainers/cli@0.89.0
+      - name: Validate template metadata
+        uses: devcontainers/action@v1.4.4
+        with:
+          validate-only: 'true'
+          base-path-to-templates: './src'
+      - name: Build and test Flutter template
+        shell: bash
+        run: bash test/flutter-smoke.sh
+
   deploy:
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
-      pull-requests: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
 
       - name: Build and publish Dev Container Templates
-        uses: devcontainers/action@v1
+        uses: devcontainers/action@v1.4.4
         with:
           publish-templates: "true"
           base-path-to-templates: "./src"
-          generate-docs: "true"
+          generate-docs: "false"
+          devcontainer-cli-version: "0.89.0"
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create PR for Documentation
-        id: push_image_info
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -e
-          echo "Start."
-
-          # Configure git and Push updates
-          git config --global user.email github-actions[bot]@users.noreply.github.com
-          git config --global user.name github-actions[bot]
-          git config pull.rebase false
-
-          branch=automated-documentation-update-$GITHUB_RUN_ID
-          git checkout -b $branch
-          message='Automated documentation update'
-
-          # Add / update and commit
-          git add */**/README.md
-          git commit -m 'Automated documentation update [skip ci]' || export NO_UPDATES=true
-
-          # Push
-          if [ "$NO_UPDATES" != "true" ] ; then
-              git push origin "$branch"
-              gh pr create --title "$message" --body "$message"
-          fi
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+      - name: Read back published template
+        run: npx --yes @devcontainers/cli@0.89.0 templates metadata ghcr.io/${{ github.repository }}/flutter:2
