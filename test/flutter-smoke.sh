@@ -31,7 +31,11 @@ config.write_text(text)
 PY
 devcontainer up --workspace-folder "$sample"
 container_id="$(docker ps -q --filter "label=devcontainer.local_folder=$sample")"
-docker inspect --format '{{.Image}}' "$container_id" > "$reports/image-id.txt"
+source_image="$(docker inspect --format '{{.Config.Image}}' "$container_id")"
+scan_ref="flutter-template-security:${container_id:0:12}"
+docker image tag "$source_image" "$scan_ref"
+docker image inspect --format '{{.Id}}' "$scan_ref" > "$reports/image-id.txt"
+printf '%s\n' "$scan_ref" > "$reports/image-ref.txt"
 devcontainer exec --workspace-folder "$sample" flutter --version --machine > "$reports/sdk-version.json"
 python3 test/sdk_security_check.py "$reports/sdk-version.json" "$reports/sdk-advisories.json"
 # Expand these variables inside the container, not on the runner.

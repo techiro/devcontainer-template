@@ -50,12 +50,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Scan the tested image OS packages
         run: |
-          image_id="$(cat "$SECURITY_REPORT_DIR/image-id.txt")"
+          image_ref="$(cat "$SECURITY_REPORT_DIR/image-ref.txt")"
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock:ro \
             -v "$SECURITY_REPORT_DIR:/reports" \
             "$TRIVY_IMAGE" image --scanners vuln --pkg-types os --no-progress \
-            --timeout 15m --format json --output /reports/os-vulnerabilities.json "$image_id"
+            --timeout 15m --format json --output /reports/os-vulnerabilities.json "$image_ref"
           docker run --rm -v "$SECURITY_REPORT_DIR:/reports" "$TRIVY_IMAGE" convert \
             --format cyclonedx --output /reports/os-sbom.cdx.json /reports/os-vulnerabilities.json
           python3 test/image_security_check.py "$SECURITY_REPORT_DIR/os-vulnerabilities.json" \
