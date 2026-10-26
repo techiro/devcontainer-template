@@ -1,6 +1,6 @@
 {
     "id": "flutter",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "name": "Flutter",
     "description": "Flutter stable SDK, Chromium and Linux desktop tools for VS Code and Codespaces (amd64 and arm64).",
     "documentationURL": "https://github.com/techiro/devcontainer-template/blob/main/src/flutter/README.md",
@@ -10,10 +10,10 @@
             "type": "string",
             "description": "Flutter SDK tag, or stable to follow the stable channel on a fresh build",
             "proposals": [
-                "3.47.7",
+                "3.47.8",
                 "stable"
             ],
-            "default": "3.47.7"
+            "default": "3.47.8"
         }
     },
     "platforms": [

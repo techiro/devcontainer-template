@@ -5,6 +5,8 @@ on:
     branches: [ main ]
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 1'
 
 permissions:
   contents: read
@@ -21,30 +23,67 @@ jobs:
         runner: [ubuntu-latest, ubuntu-24.04-arm]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 40
+    env:
+      TRIVY_IMAGE: ghcr.io/aquasecurity/trivy@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c # 0.76.1
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: actions/setup-node@v7.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
       - name: Install Dev Container CLI
-        run: npm install --global @devcontainers/cli@0.89.0
+        run: |
+          export SECURITY_REPORT_DIR="$RUNNER_TEMP/flutter-security"
+          echo "SECURITY_REPORT_DIR=$SECURITY_REPORT_DIR" >> "$GITHUB_ENV"
+          mkdir -p "$SECURITY_REPORT_DIR"
+          npm install --ignore-scripts --prefix "$RUNNER_TEMP/devcontainer-cli" --save-exact @devcontainers/cli@0.89.0
+          cp "$RUNNER_TEMP/devcontainer-cli/package-lock.json" "$SECURITY_REPORT_DIR/cli-package-lock.json"
+          npm audit --prefix "$RUNNER_TEMP/devcontainer-cli" --audit-level=high --json > "$SECURITY_REPORT_DIR/cli-audit.json"
+          echo "$RUNNER_TEMP/devcontainer-cli/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: Security check regression tests
+        run: python3 -m unittest discover -s test -p 'test_*.py' -v
       - name: Build and test Flutter template
         shell: bash
         run: bash test/flutter-smoke.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Scan the tested image OS packages
+        run: |
+          image_id="$(cat "$SECURITY_REPORT_DIR/image-id.txt")"
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock:ro \
+            -v "$SECURITY_REPORT_DIR:/reports" \
+            "$TRIVY_IMAGE" image --scanners vuln --pkg-types os --no-progress \
+            --timeout 15m --format json --output /reports/os-vulnerabilities.json "$image_id"
+          docker run --rm -v "$SECURITY_REPORT_DIR:/reports" "$TRIVY_IMAGE" convert \
+            --format cyclonedx --output /reports/os-sbom.cdx.json /reports/os-vulnerabilities.json
+          python3 test/image_security_check.py "$SECURITY_REPORT_DIR/os-vulnerabilities.json" \
+            "$SECURITY_REPORT_DIR/security-summary.json" "$SECURITY_REPORT_DIR/image-id.txt"
+      - name: Save security reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: security-${{ matrix.runner }}
+          path: ${{ env.SECURITY_REPORT_DIR }}/
+          retention-days: 14
 
   deploy:
+    environment: ghcr
     needs: validate
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && contains(fromJSON('["push","workflow_dispatch"]'), github.event_name)
     runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
 
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Build and publish Dev Container Templates
-        uses: devcontainers/action@v1.4.4
+        uses: devcontainers/action@bef2cf2d1a019b00b45e184f83035e01bd1972f3 # v1.4.4
         with:
           publish-templates: "true"
           base-path-to-templates: "./src"
@@ -54,7 +93,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-node@v7.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
       - name: Read back published template
