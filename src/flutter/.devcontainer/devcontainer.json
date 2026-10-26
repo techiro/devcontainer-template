@@ -29,7 +29,6 @@
                 "--web-hostname=0.0.0.0",
                 "--web-port=3000",
                 "--web-browser-flag=--headless=new",
-                "--web-browser-flag=--no-sandbox",
                 "--web-browser-flag=--disable-dev-shm-usage"
               ]
             },
@@ -59,5 +58,8 @@
       "label": "Flutter Web",
       "onAutoForward": "notify"
     }
-  }
+  },
+  "runArgs": [
+    "--security-opt=seccomp=${localWorkspaceFolder}/.devcontainer/chromium-seccomp.json"
+  ]
 }

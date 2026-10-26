@@ -10,7 +10,7 @@ This repository provides a Flutter development environment for VS Code Dev Conta
 
 | Category | Template | Template reference | Description | Documentation |
 |----------|----------|-------|-------------|---------------|
-| Flutter Development | Flutter | `ghcr.io/techiro/devcontainer-template/flutter:2` | Flutter 3.47.7, bundled Dart SDK, Chromium and Linux build tools | [src/flutter/README.md](src/flutter/README.md) |
+| Flutter Development | Flutter | `ghcr.io/techiro/devcontainer-template/flutter:2` | Flutter 3.47.8, bundled Dart SDK, Chromium and Linux build tools | [src/flutter/README.md](src/flutter/README.md) |
 
 ## Usage
 
