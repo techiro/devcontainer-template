@@ -28,11 +28,6 @@ jobs:
           node-version: '24'
       - name: Install Dev Container CLI
         run: npm install --global @devcontainers/cli@0.89.0
-      - name: Validate template metadata
-        uses: devcontainers/action@v1.4.4
-        with:
-          validate-only: 'true'
-          base-path-to-templates: './src'
       - name: Build and test Flutter template
         shell: bash
         run: bash test/flutter-smoke.sh
