@@ -44,6 +44,10 @@ Use the current [Codex Cloud environment setup](https://learn.chatgpt.com/docs/e
 select `techiro/devcontainer-template`, and keep **Who can use** set to **Only me**.
 Ask setup to prepare a maintenance-only environment with Git, Python 3, and Bash;
 do not install the Flutter toolchain or start the repository's devcontainer.
+For this configuration, name the published environment
+`devcontainer-template-maintenance`. Restrict network access to `github.com` and
+`api.github.com`, with full public internet access and the Package managers
+presets disabled. Add no secrets or Start skill.
 Use the following commands as the Install script, from the repository root:
 
 ```sh
