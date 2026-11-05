@@ -37,7 +37,6 @@ docker image tag "$source_image" "$scan_ref"
 docker image inspect --format '{{.Id}}' "$scan_ref" > "$reports/image-id.txt"
 printf '%s\n' "$scan_ref" > "$reports/image-ref.txt"
 devcontainer exec --workspace-folder "$sample" flutter --version --machine > "$reports/sdk-version.json"
-python3 test/sdk_security_check.py "$reports/sdk-version.json" "$reports/sdk-advisories.json"
 # Expand these variables inside the container, not on the runner.
 # shellcheck disable=SC2016
 devcontainer exec --workspace-folder "$sample" bash -c '

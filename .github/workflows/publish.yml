@@ -5,6 +5,11 @@ on:
     branches: [ main ]
   pull_request:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish templates after all checks pass (main only)
+        type: boolean
+        default: false
   schedule:
     - cron: '17 3 * * 1'
 
@@ -23,43 +28,69 @@ jobs:
         runner: [ubuntu-latest, ubuntu-24.04-arm]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 40
+    defaults:
+      run:
+        shell: bash
     env:
-      TRIVY_IMAGE: ghcr.io/aquasecurity/trivy@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c # 0.76.1
+      TRIVY_IMAGE: ghcr.io/aquasecurity/trivy@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb # 0.76.2
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        id: checkout
         with:
           persist-credentials: false
+      - name: Initialize report directory
+        run: |
+          mkdir -p "$RUNNER_TEMP/flutter-security"
+          echo "SECURITY_REPORT_DIR=$RUNNER_TEMP/flutter-security" >> "$GITHUB_ENV"
+          echo "CLI_PREFIX=$RUNNER_TEMP/devcontainer-cli" >> "$GITHUB_ENV"
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        id: setup_node
+        continue-on-error: true
         with:
           node-version: '24'
       - name: Install Dev Container CLI
+        id: install
+        if: ${{ !cancelled() && steps.setup_node.outcome == 'success' }}
+        continue-on-error: true
         run: |
-          export SECURITY_REPORT_DIR="$RUNNER_TEMP/flutter-security"
-          echo "SECURITY_REPORT_DIR=$SECURITY_REPORT_DIR" >> "$GITHUB_ENV"
-          mkdir -p "$SECURITY_REPORT_DIR"
-          npm install --ignore-scripts --prefix "$RUNNER_TEMP/devcontainer-cli" --save-exact @devcontainers/cli@0.89.0
-          cp "$RUNNER_TEMP/devcontainer-cli/package-lock.json" "$SECURITY_REPORT_DIR/cli-package-lock.json"
-          npm audit --prefix "$RUNNER_TEMP/devcontainer-cli" --audit-level=high --json > "$SECURITY_REPORT_DIR/cli-audit.json"
-          echo "$RUNNER_TEMP/devcontainer-cli/node_modules/.bin" >> "$GITHUB_PATH"
+          npm install --ignore-scripts --prefix "$CLI_PREFIX" --save-exact @devcontainers/cli@0.90.0 2>&1 | tee "$SECURITY_REPORT_DIR/cli-install.log"
+          cp "$CLI_PREFIX/package-lock.json" "$SECURITY_REPORT_DIR/cli-package-lock.json"
+          echo "$CLI_PREFIX/node_modules/.bin" >> "$GITHUB_PATH"
+      - name: Audit CLI npm dependencies
+        id: npm
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: python3 test/dependency_audit.py npm --reports "$SECURITY_REPORT_DIR" --cli-prefix "$CLI_PREFIX"
       - name: Security check regression tests
+        id: tests
+        if: ${{ !cancelled() }}
+        continue-on-error: true
         run: python3 -m unittest discover -s test -p 'test_*.py' -v
       - name: Build and test Flutter template
+        id: smoke
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        continue-on-error: true
         shell: bash
-        run: bash test/flutter-smoke.sh
+        run: bash test/flutter-smoke.sh 2>&1 | tee "$SECURITY_REPORT_DIR/smoke.log"
+      - name: Audit Flutter and Dart SDKs
+        id: sdk
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: python3 test/dependency_audit.py sdk --reports "$SECURITY_REPORT_DIR"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Scan the tested image OS packages
-        run: |
-          image_ref="$(cat "$SECURITY_REPORT_DIR/image-ref.txt")"
-          docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock:ro \
-            -v "$SECURITY_REPORT_DIR:/reports" \
-            "$TRIVY_IMAGE" image --scanners vuln --pkg-types os --no-progress \
-            --timeout 15m --format json --output /reports/os-vulnerabilities.json "$image_ref"
-          docker run --rm -v "$SECURITY_REPORT_DIR:/reports" "$TRIVY_IMAGE" convert \
-            --format cyclonedx --output /reports/os-sbom.cdx.json /reports/os-vulnerabilities.json
-          python3 test/image_security_check.py "$SECURITY_REPORT_DIR/os-vulnerabilities.json" \
-            "$SECURITY_REPORT_DIR/security-summary.json" "$SECURITY_REPORT_DIR/image-id.txt"
+        id: os
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: python3 test/dependency_audit.py os --reports "$SECURITY_REPORT_DIR"
+      - name: Summarize all audit results
+        id: summary
+        if: always()
+        continue-on-error: true
+        run: python3 test/dependency_audit.py summary --reports "$SECURITY_REPORT_DIR"
+        env:
+          AUDIT_STEPS: ${{ toJSON(steps) }}
       - name: Save security reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -67,11 +98,17 @@ jobs:
           name: security-${{ matrix.runner }}
           path: ${{ env.SECURITY_REPORT_DIR }}/
           retention-days: 14
+          if-no-files-found: error
+      - name: Enforce audit and validation results
+        if: always()
+        env:
+          AUDIT_OUTCOME: ${{ steps.summary.outcome }}
+        run: test "$AUDIT_OUTCOME" = success
 
   deploy:
     environment: ghcr
     needs: validate
-    if: github.ref == 'refs/heads/main' && contains(fromJSON('["push","workflow_dispatch"]'), github.event_name)
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish == true))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -88,7 +125,7 @@ jobs:
           publish-templates: "true"
           base-path-to-templates: "./src"
           generate-docs: "false"
-          devcontainer-cli-version: "0.89.0"
+          devcontainer-cli-version: "0.90.0"
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -97,4 +134,4 @@ jobs:
         with:
           node-version: '24'
       - name: Read back published template
-        run: npx --yes @devcontainers/cli@0.89.0 templates metadata ghcr.io/${{ github.repository }}/flutter:2
+        run: npx --yes @devcontainers/cli@0.90.0 templates metadata ghcr.io/${{ github.repository }}/flutter:2

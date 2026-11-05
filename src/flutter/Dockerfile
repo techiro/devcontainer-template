@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM mcr.microsoft.com/devcontainers/base:2-bookworm
 
-ARG FLUTTER_VERSION=3.47.8
+ARG FLUTTER_VERSION=3.47.9
 
 LABEL org.opencontainers.image.source="https://github.com/techiro/devcontainer-template"
 LABEL org.opencontainers.image.description="Flutter DevContainer for VS Code and Codespaces"
