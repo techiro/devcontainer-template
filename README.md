@@ -10,7 +10,7 @@ This repository provides a Flutter development environment for VS Code Dev Conta
 
 | Category | Template | Template reference | Description | Documentation |
 |----------|----------|-------|-------------|---------------|
-| Flutter Development | Flutter | `ghcr.io/techiro/devcontainer-template/flutter:2` | Flutter 3.47.8, bundled Dart SDK, Chromium and Linux build tools | [src/flutter/README.md](src/flutter/README.md) |
+| Flutter Development | Flutter | `ghcr.io/techiro/devcontainer-template/flutter:2` | Flutter 3.47.9, bundled Dart SDK, Chromium and Linux build tools | [src/flutter/README.md](src/flutter/README.md) |
 
 ## Usage
 
@@ -23,12 +23,16 @@ To add the published template to an existing project, or to debug a new Flutter 
 
 The registry reference is an **OCI Dev Container Template**, not a runnable Docker image. The template builds its included Dockerfile; it does not depend on a separately published Flutter image.
 
+## Dependency audits
+
+GitHub Actions audits the CLI, Flutter/Dart SDKs, and container OS packages on PRs, `main` updates, and every Monday at 12:17 Japan time. For an on-demand audit, run **Validate and Publish Dev Container Templates** with **publish** unchecked. Results appear in the run Summary and per-architecture `security-*` Artifacts (14-day retention). Blocking vulnerabilities or incomplete checks prevent publication. See the [audit guide](src/flutter/README.md#ci-reports-and-release-policy) for reports and troubleshooting.
+
 ## Contributing
 
 Run the same smoke test as CI from a host with Docker running:
 
 ```sh
-npx --yes --package=@devcontainers/cli@0.89.0 -- bash test/flutter-smoke.sh
+npx --yes --package=@devcontainers/cli@0.90.0 -- bash test/flutter-smoke.sh
 ```
 
 This applies the template's default options in a temporary workspace, checks empty and existing projects, runs analyzer and VM/Chromium tests, and builds Web and Linux apps. It removes its test container on exit and leaves the temporary workspace path in the log for inspection.

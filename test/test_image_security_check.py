@@ -39,6 +39,15 @@ class ImageSecurityCheckTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             summarize(self.report, "sha256:test")
 
+    def test_malformed_finding_cannot_pass(self):
+        self.add_finding("UNRECOGNIZED", "")
+        with self.assertRaises(ValueError):
+            summarize(self.report, "sha256:test")
+        self.report["Results"][0]["Vulnerabilities"][0]["Severity"] = "HIGH"
+        self.report["Results"][0]["Vulnerabilities"][0]["FixedVersion"] = None
+        with self.assertRaises(ValueError):
+            summarize(self.report, "sha256:test")
+
 
 if __name__ == "__main__":
     unittest.main()

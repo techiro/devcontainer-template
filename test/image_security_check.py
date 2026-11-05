@@ -14,6 +14,14 @@ def summarize(report, expected_image):
     if not results or not any(item.get("Packages") for item in results):
         raise ValueError("OS package inventory missing from image scan")
     vulnerabilities = [item for result in results for item in result.get("Vulnerabilities", [])]
+    for item in vulnerabilities:
+        if item["Severity"] not in ("UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL"):
+            raise ValueError("Unrecognized vulnerability severity")
+        for key in ("VulnerabilityID", "PkgName", "InstalledVersion"):
+            if not isinstance(item[key], str) or not item[key]:
+                raise ValueError(f"Invalid vulnerability field: {key}")
+        if "FixedVersion" in item and not isinstance(item["FixedVersion"], str):
+            raise ValueError("Invalid fixed version")
     blocking = [item for item in vulnerabilities
                 if item["Severity"] in ("HIGH", "CRITICAL") and item.get("FixedVersion")]
     return {
