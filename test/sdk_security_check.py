@@ -3,6 +3,8 @@ import json
 import os
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
 
 KNOWN_ADVISORY = "GHSA-frr6-h895-5pxp"
@@ -35,15 +37,17 @@ def affected(version, expression):
     return False
 
 
-def check(version_info, advisories):
+class VulnerabilityError(ValueError):
+    """A supported advisory or minimum-version rule found a vulnerable SDK."""
+
+
+def check(version_info, advisories, evaluated=None):
     versions = {"Flutter SDK": stable_version(version_info["frameworkVersion"]),
                 "Dart SDK": stable_version(version_info["dartSdkVersion"].split()[0])}
-    for package, minimum in MINIMUM.items():
-        if versions[package] < minimum:
-            raise ValueError(f"{KNOWN_ADVISORY}: {package} {versions[package]} < {minimum}")
     if KNOWN_ADVISORY not in {a["ghsa_id"] for a in advisories}:
         raise ValueError("Required upstream advisory missing; refusing an incomplete feed")
-    evaluated = []
+    if evaluated is None:
+        evaluated = []
     for advisory in advisories:
         if advisory["severity"] not in ("high", "critical"):
             continue
@@ -53,14 +57,40 @@ def check(version_info, advisories):
             package = vulnerability["package"]["name"]
             if package not in versions:
                 raise ValueError(f"{advisory['ghsa_id']}: unknown package {package!r}; review required")
-            if affected(versions[package], vulnerability["vulnerable_version_range"]):
-                raise ValueError(f"{advisory['ghsa_id']}: {package} remains affected")
             evaluated.append({"advisory": advisory["ghsa_id"], "package": package,
-                              "version": list(versions[package]), "affected": False})
+                              "version": list(versions[package]),
+                              "affected": affected(versions[package], vulnerability["vulnerable_version_range"])})
+    for package, minimum in MINIMUM.items():
+        if versions[package] < minimum and not any(
+                item["advisory"] == KNOWN_ADVISORY and item["package"] == package and item["affected"]
+                for item in evaluated):
+            evaluated.append({"advisory": KNOWN_ADVISORY, "package": package,
+                              "version": list(versions[package]), "affected": True})
+    findings = [item for item in evaluated if item["affected"]]
+    if findings:
+        raise VulnerabilityError("; ".join(
+            f"{item['advisory']}: {item['package']} remains affected" for item in findings))
     return evaluated
 
 
-def fetch_advisories():
+def fetch_page(request):
+    # Three retries after the initial request, bounded even when Retry-After is large.
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            if error.code != 429 and not 500 <= error.code <= 599:
+                raise
+            if attempt == 3:
+                raise
+        except OSError:
+            if attempt == 3:
+                raise
+        time.sleep(2 ** attempt)
+
+
+def fetch_advisories(evidence=None):
     advisories = {}
     headers = {"Accept": "application/vnd.github+json", "User-Agent": "flutter-template-security-check",
                "X-GitHub-Api-Version": "2022-11-28"}
@@ -70,8 +100,9 @@ def fetch_advisories():
         page = 1
         while True:
             url = f"https://api.github.com/repos/{repository}/security-advisories?per_page=100&page={page}"
-            with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=30) as response:
-                data = json.load(response)
+            data = fetch_page(urllib.request.Request(url, headers=headers))
+            if evidence is not None:
+                evidence.append({"repository": repository, "page": page, "response": data})
             if not isinstance(data, list):
                 raise ValueError("Unexpected advisory response")
             for advisory in data:
@@ -82,10 +113,28 @@ def fetch_advisories():
     return list(advisories.values())
 
 
+def audit(version_path, output_path):
+    from pathlib import Path
+    result = {"status": "error", "reason": "", "versions": None,
+              "pages": [], "evaluated": [], "blocking_count": 0}
+    try:
+        result["versions"] = json.loads(Path(version_path).read_text())
+        advisories = fetch_advisories(result["pages"])
+        check(result["versions"], advisories, result["evaluated"])
+        result["status"] = "pass"
+    except VulnerabilityError as error:
+        result.update(status="findings", reason=str(error))
+    except urllib.error.HTTPError as error:
+        category = "Authentication/permission failure" if error.code in (401, 403) else "Advisory API failure"
+        result["reason"] = f"{category}: HTTP {error.code}"
+    except Exception as error:
+        result["reason"] = f"{type(error).__name__}: {error}"
+    result["blocking_count"] = sum(item["affected"] for item in result["evaluated"])
+    Path(output_path).write_text(json.dumps(result, indent=2) + "\n")
+    return result
+
+
 if __name__ == "__main__":
-    with open(sys.argv[1]) as source:
-        version_info = json.load(source)
-    result = {"versions": version_info, "evaluated": check(version_info, fetch_advisories())}
-    with open(sys.argv[2], "w") as destination:
-        json.dump(result, destination, indent=2)
-    print("Upstream stable SDK advisory checks passed")
+    result = audit(sys.argv[1], sys.argv[2])
+    print(result["reason"] or "Upstream stable SDK advisory checks passed")
+    sys.exit(result["status"] != "pass")
