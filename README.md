@@ -65,8 +65,8 @@ git diff --check
 ```
 
 These checks need no third-party Python packages, credentials, or running services.
-No Start skill is needed. Publish the prepared environment, then run the same
-checks in a **new cloud task**; setup success alone does not verify task access.
+Publish the prepared environment, then run the same checks in a **new cloud
+task**; setup success alone does not verify task access.
 Repeat the checks after checking out or updating a branch. Reconfigure and
 republish when the required tools change, and verify with a new task.
 
@@ -96,8 +96,10 @@ network allowlist as authentication or permission to publish.
    and IDE checks separately. Say explicitly when IDE operation was not tested.
 
 The PR workflow validates changes without publishing. Confirm that `deploy` is
-**skipped** for the PR run. A push to `main` or a manual workflow dispatch on
-`main` can publish to GHCR after validation and environment protection checks.
+**skipped** for the PR run. A push to `main` or a manual run on `main` with
+`publish=true` can publish to GHCR after both architecture checks pass and the
+`ghcr` environment approves deployment. Leave **publish** unchecked for a
+manual audit.
 Maintenance tasks must stop at the reviewable PR unless merging/publication is
 separately requested; do not enable auto-merge or dispatch a release to test setup.
 
